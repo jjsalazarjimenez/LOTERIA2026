@@ -107,6 +107,9 @@ h2{font-family:var(--serif);font-size:1.6rem;margin:0 0 4px}
 #toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:var(--gold);color:var(--ink);font-weight:700;padding:12px 18px;border-radius:12px;box-shadow:0 12px 30px #000a;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:30;max-width:90vw;text-align:center}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 [hidden]{display:none!important}
+.callout .cam{position:absolute;top:3px;right:3px;z-index:3;border:0;border-radius:50%;width:22px;height:22px;padding:0;font-size:12px;line-height:22px;cursor:pointer;background:#000b;color:#fff;opacity:0;transition:opacity .15s}
+.callout:hover .cam,.callout:focus-within .cam{opacity:1}
+@media (hover:none){.callout .cam{opacity:.9}}
 .sorteo-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px;align-items:start}
 .dgroup{margin-bottom:14px}
 .dgroup h4{margin:0 0 6px;font-family:var(--serif);font-size:1.05rem}
@@ -317,6 +320,7 @@ footer{margin-top:40px;color:var(--mute);font-size:.85rem;border-top:1px solid #
   <p>Para saber qué administraciones tienen un número concreto: <a href="https://www.loteriasyapuestas.es/es/buscar-decimo" target="_blank" rel="noopener">buscador oficial de Loterías y Apuestas del Estado</a> y <a href="https://www.elmundo.es/loterias/loteria-navidad/localizar-numero.html" target="_blank" rel="noopener">buscador de EL MUNDO</a>. Juega con responsabilidad.</p>
 </footer>
 </div>
+<input type="file" id="photoFile" accept="image/*" hidden>
 <div id="tip" role="tooltip"></div>
 
 <script>
@@ -357,7 +361,8 @@ const clean = t=>String(t==null?"":t).replace(/[<>&"`]/g,"").trim().slice(0,80);
 function getState(){
   return {v:1,t:Date.now(),
     numbers:NUMS.map(x=>({n:x.n,part:x.part,venue:BUY[x.n].venue,town:BUY[x.n].town})),
-    towns:Object.fromEntries(Object.entries(TOWNS).filter(([id])=>numbersIn(id).length))};
+    towns:Object.fromEntries(Object.entries(TOWNS).filter(([id])=>numbersIn(id).length)),
+    photos:Object.fromEntries(Object.entries(OWN).filter(([id,v])=>numbersIn(id).length&&okOwn(v)))};
 }
 function applyState(st){
   if(!st||!Array.isArray(st.numbers)||!st.towns||typeof st.towns!=="object") throw new Error("Formato no válido");
@@ -375,8 +380,9 @@ function applyState(st){
   Object.keys(TOWNS).forEach(k=>delete TOWNS[k]); Object.assign(TOWNS,T);
   Object.keys(BUY).forEach(k=>delete BUY[k]); Object.assign(BUY,B);
   NUMS.length=0; L.forEach(x=>NUMS.push(x));
+  OWN={}; if(st.photos&&typeof st.photos==="object") Object.entries(st.photos).forEach(([id,v])=>{ if(T[id]&&okOwn(v)) OWN[id]=v; });
 }
-function saveState(){ try{ localStorage.setItem(STATE_KEY,JSON.stringify(getState())); }catch(e){} }
+function saveState(){ try{ localStorage.setItem(STATE_KEY,JSON.stringify(getState())); return true; }catch(e){ return false; } }
 function migrateOld(){
   try{
     const ex=JSON.parse(localStorage.getItem("loteria26_extra")||"[]"), del=JSON.parse(localStorage.getItem("loteria26_borrados")||"[]");
@@ -605,7 +611,7 @@ function showTip(e,id){
   const ns=numbersIn(id);
   const rows=ns.map(n=>`<div><b style="font-family:var(--serif);color:var(--gold)">${n}</b> · ${BUY[n].venue}</div>`).join("");
   const ph=PHOTOS[id];
-  const im=`<div style="position:relative;height:110px;border-radius:6px;overflow:hidden;margin-bottom:6px">${artSvg(id)}${ph&&okSrc(ph.src)?`<img src="${ph.src}" alt="" referrerpolicy="no-referrer" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" onerror="this.remove()">`:""}</div>`;
+  const im=`<div style="position:relative;height:110px;border-radius:6px;overflow:hidden;margin-bottom:6px">${artSvg(id)}${photoSrc(id)?`<img src="${photoSrc(id)}" alt="" referrerpolicy="no-referrer" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" onerror="this.remove()">`:""}</div>`;
   $("tip").innerHTML = `${im}<b>${townName(id)}</b><div style="margin-top:4px">${rows}</div><div style="margin-top:6px;font-size:.8rem;color:var(--mute)">Pulsa para ir pasando por sus números</div>`;
   const t=$("tip"); t.style.opacity=1;
   t.style.left=Math.min(e.clientX+14,innerWidth-280)+"px"; t.style.top=(e.clientY+14)+"px";
@@ -697,6 +703,46 @@ const SCENE_BY_NAME={"Madrid":"mad","Cádiz":"cad","Sigüenza":"sig"};
 const sceneFor=id=>SCENES[id]?id:(TOWNS[id]&&SCENE_BY_NAME[TOWNS[id][0]])||"gen";
 const artSvg=id=>`<svg class="art" viewBox="0 0 230 160" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${SCENES[sceneFor(id)]}</svg>`;
 
+const OWN_MAX=450000;   // tamaño máximo (caracteres) de cada foto propia
+let OWN={}, photoTarget=null;
+const okOwn=u=>typeof u==="string"&&u.startsWith("data:image/jpeg;base64,")&&u.length<=OWN_MAX;
+function photoSrc(id){
+  if(OWN[id]&&okOwn(OWN[id])) return OWN[id];
+  const ph=PHOTOS[id]; return ph&&okSrc(ph.src)?ph.src:"";
+}
+function choosePhoto(id){ photoTarget=id; const f=$("photoFile"); f.value=""; f.click(); }
+function removeOwn(id){
+  delete OWN[id]; saveState(); renderCallouts(); renderSide();
+  toast(`Vuelve la foto automática de ${townName(id)}.`);
+}
+function fileToJpeg(file){
+  return new Promise((res,rej)=>{
+    if(!file||!/^image\//.test(file.type)) return rej(new Error("tipo"));
+    const url=URL.createObjectURL(file), img=new Image();
+    img.onload=()=>{
+      const W=640, ratio=92/64; let sw=img.naturalWidth, sh=img.naturalHeight, sx=0, sy=0;
+      if(sw/sh>ratio){ const nw=sh*ratio; sx=(sw-nw)/2; sw=nw; } else { const nh=sw/ratio; sy=(sh-nh)/2; sh=nh; }
+      const c=document.createElement("canvas"); c.width=W; c.height=Math.round(W/ratio);
+      c.getContext("2d").drawImage(img,sx,sy,sw,sh,0,0,c.width,c.height);
+      URL.revokeObjectURL(url);
+      let q=.82, d=c.toDataURL("image/jpeg",q);
+      while(d.length>OWN_MAX&&q>.4){ q-=.1; d=c.toDataURL("image/jpeg",q); }
+      d.length<=OWN_MAX?res(d):rej(new Error("grande"));
+    };
+    img.onerror=()=>{ URL.revokeObjectURL(url); rej(new Error("lectura")); };
+    img.src=url;
+  });
+}
+async function onPhotoChosen(e){
+  const f=e.target.files&&e.target.files[0], id=photoTarget; photoTarget=null;
+  if(!f||!id||!TOWNS[id]) return;
+  try{
+    OWN[id]=await fileToJpeg(f);
+    const ok=saveState(); renderCallouts(); renderSide();
+    toast(ok?`Foto de ${townName(id)} cambiada.`:"La foto se ve, pero no cabe en el almacenamiento del navegador y no se guardará.");
+  }catch(err){ toast("No se pudo usar esa imagen. Prueba con una foto JPG o PNG."); }
+  e.target.value="";
+}
 const PHOTO_KEY="loteria26_fotos";
 let PHOTOS={}, TRIED=new Set(), PLACED=[];
 try{ PHOTOS=JSON.parse(localStorage.getItem(PHOTO_KEY)||"{}")||{}; }catch(e){ PHOTOS={}; }
@@ -723,11 +769,13 @@ function cycleTown(id){ const ns=numbersIn(id); if(!ns.length) return; const i=n
 function renderCallouts(){
   $("callouts").innerHTML = PLACED.map(it=>{
     const ph=PHOTOS[it.id], name=townName(it.id);
-    const img=ph&&okSrc(ph.src)?`<img src="${ph.src}" alt="${name}" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:"";
+    const src=photoSrc(it.id);
+    const img=src?`<img src="${src}" alt="${name}" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:"";
     return `<figure class="callout" data-id="${it.id}" tabindex="0" role="button" aria-label="${name}" title="${name}${ph&&ph.title?" · "+ph.title:""}"
-      style="left:${(it.slot.x/VBW*100).toFixed(2)}%;top:${(it.slot.y/560*100).toFixed(2)}%;margin:0">${artSvg(it.id)}${img}<figcaption>${name}</figcaption></figure>`;
+      style="left:${(it.slot.x/VBW*100).toFixed(2)}%;top:${(it.slot.y/560*100).toFixed(2)}%;margin:0">${artSvg(it.id)}${img}<button class="cam" type="button" aria-label="Cambiar la foto de ${name}" title="Cambiar la foto">📷</button><figcaption>${name}</figcaption></figure>`;
   }).join("");
   document.querySelectorAll(".callout").forEach(c=>{
+    const cam=c.querySelector(".cam"); if(cam) cam.addEventListener("click",e=>{ e.stopPropagation(); choosePhoto(c.dataset.id); });
     c.addEventListener("click",()=>cycleTown(c.dataset.id));
     c.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); cycleTown(c.dataset.id); } });
   });
@@ -763,7 +811,10 @@ function renderSide(){
   $("pick").querySelectorAll(".chip").forEach(b=>b.onclick=()=>select(b.dataset.n));
   if(!sel||!BUY[sel]){ $("selInfo").innerHTML=`<p style="margin:0;color:var(--mute)">Aún no hay números. Añade el primero en «Añadir un número nuevo».</p>`; $("assigned").innerHTML=""; return; }
   const b=BUY[sel], x=NUMS.find(z=>z.n===sel);
-  $("selInfo").innerHTML = `<p style="margin:0">El <b style="font-family:var(--serif);color:var(--gold)">${sel}</b> (${x.part} €) lo compraste en <b>${b.venue}</b>, en ${townName(b.town)}.</p>`;
+  $("selInfo").innerHTML = `<p style="margin:0">El <b style="font-family:var(--serif);color:var(--gold)">${sel}</b> (${x.part} €) lo compraste en <b>${b.venue}</b>, en ${townName(b.town)}.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn alt" id="pickPhoto" type="button">📷 Cambiar foto de ${townName(b.town)}</button>${OWN[b.town]?'<button class="btn alt" id="resetPhoto" type="button">Quitar mi foto</button>':""}</div>`;
+  $("pickPhoto").onclick=()=>choosePhoto(b.town);
+  const rp=$("resetPhoto"); if(rp) rp.onclick=()=>removeOwn(b.town);
   $("assigned").innerHTML = Object.keys(TOWNS).filter(id=>numbersIn(id).length).map(id=>{
     const ns=numbersIn(id);
     return `<li style="flex-direction:column;gap:4px"><b>${townName(id)} · ${ns.length} ${ns.length>1?"números":"número"}</b>`+
@@ -980,6 +1031,7 @@ function toast(msg){
 
 /* ---------- Inicio ---------- */
 $("fAdd").onclick=addNumber;
+$("photoFile").addEventListener("change",onPhotoChosen);
 $("fCancel").onclick=()=>{ resetForm(); msg("Edición cancelada.",true); };
 $("endN").onclick=()=>{ endMode="n"; $("endN").classList.add("on"); $("endD").classList.remove("on"); renderEndings(); };
 $("endD").onclick=()=>{ endMode="d"; $("endD").classList.add("on"); $("endN").classList.remove("on"); renderEndings(); };
