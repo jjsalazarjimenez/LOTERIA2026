@@ -26,6 +26,7 @@ header p{color:var(--mute);margin:0;max-width:52ch}
 .hero-balls{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .ball{width:62px;height:62px;border-radius:50%;display:grid;place-items:center;font-family:var(--serif);font-weight:800;font-size:1.7rem;color:var(--ink);
   background:radial-gradient(circle at 32% 28%,#fff 0,#ffe9ad 28%,var(--gold) 70%,#c88b13 100%);box-shadow:0 6px 14px #0007, inset 0 -4px 8px #0003}
+.ball.logo{padding:6px;background:radial-gradient(circle at 32% 28%,#fff,#f3efe2 60%,#d9d3bd)}
 .hero-balls .ball{animation:bob 3.6s ease-in-out infinite}
 .hero-balls .ball:nth-child(2n){animation-delay:-1.2s}
 .hero-balls .ball:nth-child(3n){animation-delay:-2.2s}
@@ -93,15 +94,6 @@ h2{font-family:var(--serif);font-size:1.6rem;margin:0 0 4px}
 .card a{font-size:.82rem;color:#1b4fb8}
 
 /* Gráficos */
-.charts{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-.bars{display:grid;gap:7px}
-.bar{display:grid;grid-template-columns:62px 1fr 96px;gap:8px;align-items:center;font-size:.85rem}
-.bar .track{background:#102049;border-radius:6px;height:20px;overflow:hidden}
-.bar .fill{height:100%;background:linear-gradient(90deg,var(--pine),var(--gold));border-radius:6px;transition:width .35s}
-.bar span:first-child{font-family:var(--serif);font-weight:700}
-.bar span:last-child{text-align:right}
-#curve{width:100%;height:auto}
-#curve text{fill:var(--mute);font-size:11px}
 
 /* Simulador */
 .sim{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
@@ -115,6 +107,29 @@ h2{font-family:var(--serif);font-size:1.6rem;margin:0 0 4px}
 #toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:var(--gold);color:var(--ink);font-weight:700;padding:12px 18px;border-radius:12px;box-shadow:0 12px 30px #000a;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:30;max-width:90vw;text-align:center}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 [hidden]{display:none!important}
+.sorteo-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px;align-items:start}
+.dgroup{margin-bottom:14px}
+.dgroup h4{margin:0 0 6px;font-family:var(--serif);font-size:1.05rem}
+.dgroup h4 small{color:var(--mute);font-family:var(--sans);font-weight:400;font-size:.8rem;margin-left:6px}
+.dfields{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
+.dfield{display:grid;gap:2px}
+.dfield input,#drawPed{background:#102049;color:var(--snow);border:2px solid #3a56a0;border-radius:10px;padding:9px 10px;width:100%;
+  font-family:var(--serif);font-weight:800;font-size:1.25rem;letter-spacing:.12em;text-align:center}
+#drawPed{font-family:var(--sans);font-weight:400;font-size:.9rem;letter-spacing:0;text-align:left;resize:vertical;margin-top:6px}
+.dfield input::placeholder{color:#546a9a}
+.dfield small{font-size:.74rem;min-height:1.1em;text-align:center;color:var(--mute)}
+.dfield.hit input{border-color:var(--gold);background:#5a4410;box-shadow:0 0 0 3px #f4b73b66}
+.dfield.hit small{color:var(--gold);font-weight:700}
+.dfield.miss input{border-color:#34508f;opacity:.75}
+.pedlbl{display:block;margin-top:6px;font-weight:700;font-size:.9rem}
+.bigwin{text-align:center;font-family:var(--serif);font-size:clamp(2rem,6vw,3.2rem);font-weight:800;line-height:1.1;color:var(--gold)}
+.bigwin.zero{color:var(--snow)}
+.balance{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;color:var(--mute);margin:6px 0 12px;font-size:.92rem}
+.balance b{color:var(--snow)}
+.balance .pos{color:#7fe0b6}.balance .neg{color:#ff9aa5}
+.ticket.win{border-color:var(--gold);box-shadow:0 0 0 4px #f4b73baa,0 0 34px #f4b73b88}
+.ribbon{position:absolute;top:-10px;right:-8px;z-index:3;background:var(--gold);color:var(--ink);font-family:var(--serif);font-weight:800;padding:4px 12px;border-radius:999px;font-size:.95rem;box-shadow:0 6px 14px #000a;transform:rotate(4deg)}
+@media (max-width:900px){.sorteo-grid{grid-template-columns:1fr}}
 .endchart{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:8px;align-items:end;min-height:120px}
 .endcol{display:flex;flex-direction:column;justify-content:flex-end;gap:3px}
 .endtot{text-align:center;font-family:var(--serif);font-weight:800;font-size:1.1rem;min-height:1.5em}
@@ -164,7 +179,7 @@ h2{font-family:var(--serif);font-size:1.6rem;margin:0 0 4px}
 footer{margin-top:40px;color:var(--mute);font-size:.85rem;border-top:1px solid #2b4382;padding-top:16px}
 
 @media (max-width:900px){
-  header,.maprow,.charts,.sim{grid-template-columns:1fr}
+  header,.maprow,.sim{grid-template-columns:1fr}
   .hero-balls{justify-content:flex-start}
   .ball{width:52px;height:52px;font-size:1.4rem}
 }
@@ -254,20 +269,9 @@ footer{margin-top:40px;color:var(--mute);font-size:.85rem;border-top:1px solid #
 </section>
 
 <section id="graficos">
-  <h2>Premios y probabilidades</h2>
-  <p class="sub">Comprar más décimos del mismo número no cambia la probabilidad de que toque, pero multiplica el premio. Para aumentar la probabilidad hay que jugar números distintos.</p>
-  <div class="charts">
-    <div class="panel">
-      <h3 style="margin-top:0;font-family:var(--serif)">Máximo si el número sale Gordo</h3>
-      <div class="bars" id="bars"></div>
-    </div>
-    <div class="panel">
-      <h3 style="margin-top:0;font-family:var(--serif)">Probabilidad según números distintos jugados</h3>
-      <svg id="curve" viewBox="0 0 520 300"></svg>
-      <p class="note" id="curveNote"></p>
-    </div>
-  </div>
-  <div class="panel" style="margin-top:20px">
+  <h2>Terminaciones</h2>
+  <p class="sub">El reintegro devuelve 20 € por décimo si tu número acaba en la misma cifra que el Gordo. Cuantas más terminaciones cubras, más probable es recuperarlo. Comprar más décimos del mismo número no cambia la probabilidad de que toque, solo multiplica el premio.</p>
+  <div class="panel">
     <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
       <h3 style="margin:0;font-family:var(--serif)">Números comprados por terminación</h3>
       <div class="pickrow" style="margin:0"><button class="chip on" id="endN" type="button">Por números</button><button class="chip" id="endD" type="button">Por décimos</button></div>
@@ -289,6 +293,21 @@ footer{margin-top:40px;color:var(--mute);font-size:.85rem;border-top:1px solid #
     <div class="panel">
       <div id="simOut"><p class="note">Pulsa «Lanzar sorteo» para ver cómo habrían quedado tus números.</p></div>
     </div>
+  </div>
+</section>
+
+<section id="sorteo">
+  <h2>Día del sorteo: comprueba tus premios</h2>
+  <p class="sub">Escribe los números según vayan saliendo. La página los compara con tus décimos y suma lo que has ganado. Se guarda solo en este navegador, así que puedes cerrarla y seguir más tarde.</p>
+  <div class="sorteo-grid">
+    <div class="panel">
+      <div id="drawGrid"></div>
+      <label class="pedlbl">Pedrea (opcional)
+        <textarea id="drawPed" rows="3" placeholder="Números premiados con 100 €, separados por espacios o comas"></textarea>
+      </label>
+      <button class="btn alt" id="drawClear" type="button" style="margin-top:10px">Borrar resultados</button>
+    </div>
+    <div class="panel" id="drawOut"></div>
   </div>
 </section>
 
@@ -524,7 +543,7 @@ function renderEndings(){
   $("endNote").textContent = !NUMS.length ? "Aún no hay números." :
     `Tus números cubren ${cub} de las 10 terminaciones${falta.length?". Sin cubrir: "+falta.join(", ")+".":"."} Si el Gordo acaba en una terminación que cubres, recuperas al menos el reintegro (20 € por décimo).`;
 }
-function refresh(){ if(editing&&!NUMS.some(x=>x.n===editing)) resetForm(); renderEndings(); buildMap(); renderCallouts(); PLACED.forEach(it=>loadPhoto(it.id)); renderTickets(); renderCards(); renderSide(); renderMap(); renderStats(); renderBars(); renderCurve(); fillTowns(); }
+function refresh(){ if(editing&&!NUMS.some(x=>x.n===editing)) resetForm(); renderEndings(); buildMap(); renderCallouts(); PLACED.forEach(it=>loadPhoto(it.id)); renderTickets(); renderCards(); renderSide(); renderMap(); renderStats(); fillTowns(); updateSorteo(); }
 
 const numbersIn = id=>NUMS.filter(x=>BUY[x.n].town===id).map(x=>x.n);
 
@@ -551,7 +570,7 @@ function pAny(k){ let q=1; for(let i=0;i<k;i++) q*=(N-M-i)/(N-i); return 1-q; }
 const active = ()=>NUMS.filter(x=>x.dec>0);
 
 /* ---------- Cabecera ---------- */
-$("heroBalls").innerHTML = "2026".split("").map(d=>`<div class="ball">${d}</div>`).join("") + `<div class="ball" style="background:radial-gradient(circle at 32% 28%,#fff,#ffb3ba 30%,var(--red) 75%);color:#fff">€</div>`;
+$("heroBalls").innerHTML = "2026".split("").map(d=>`<div class="ball">${d}</div>`).join("") + `<div class="ball logo" title="Bombo de la lotería"><svg viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true">    <defs><clipPath id="bmb"><ellipse cx="32" cy="35" rx="17" ry="18.5"/></clipPath></defs>    <rect x="26" y="9" width="12" height="6" rx="2.5" fill="#0d1833"/><rect x="29.5" y="5" width="5" height="5" rx="2" fill="#0d1833"/>    <ellipse cx="32" cy="35" rx="17" ry="18.5" fill="#fff8e1" stroke="#0d1833" stroke-width="3"/>    <g clip-path="url(#bmb)" fill="none" stroke="#0d1833" stroke-width="2.4"><line x1="32" y1="14" x2="32" y2="56"/><ellipse cx="32" cy="35" rx="10" ry="19"/><ellipse cx="32" cy="35" rx="17" ry="19"/></g>    <rect x="27" y="52" width="10" height="5" rx="2" fill="#0d1833"/>  </svg></div>`;
 
 /* ---------- Mapa ---------- */
 function buildMap(){
@@ -762,8 +781,9 @@ function renderTickets(){
   if(!NUMS.length){ el.innerHTML=`<p class="note">No tienes ningún número.</p>`; return; }
   el.innerHTML = NUMS.map(x=>{
     const b=BUY[x.n];
+    const WN=computeWins().wins[x.n], wtot=WN?WN.reduce((s,w)=>s+w.amt,0)*x.dec:0;
     const digs=x.n.split("").map((d,i)=>`<span class="dg" style="left:${(TK_X[i]/TK_W*100).toFixed(2)}%">${d}</span>`).join("");
-    return `<div class="tk"><div class="ticket ${x.n===sel?"sel":""}" data-n="${x.n}" role="button" tabindex="0" aria-label="Décimo ${x.n}">${digs}</div>
+    return `<div class="tk"><div class="ticket ${x.n===sel?"sel":""}${wtot?" win":""}" data-n="${x.n}" role="button" tabindex="0" aria-label="Décimo ${x.n}">${digs}${wtot?`<span class="ribbon">${eur(wtot)}</span>`:""}</div>
       <div class="tkinfo"><span><b>${x.n}</b> · ${x.part} € · ${b.venue}, ${townName(b.town)}</span>
       <span class="tkbtn"><button class="btn alt" type="button" data-act="spin">Girar</button><button class="btn alt" type="button" data-act="edit">Editar</button><button class="btn alt" type="button" data-act="png">Descargar</button></span></div></div>`;
   }).join("");
@@ -836,11 +856,11 @@ function renderCards(){
     const ed=c.querySelector(".ed"); if(ed) ed.addEventListener("click",()=>startEdit(c.dataset.n));
     const r=c.querySelector("input");
     r.addEventListener("input",()=>{
-      const x=NUMS.find(z=>z.n===c.dataset.n); x.dec=+r.value; x.part=x.dec*20; saveState(); renderTickets(); renderEndings();
+      const x=NUMS.find(z=>z.n===c.dataset.n); x.dec=+r.value; x.part=x.dec*20; saveState(); renderTickets(); renderEndings(); updateSorteo();
       c.querySelector(`#d${x.n}`).textContent=num(x.dec);
       c.querySelector(".tag").textContent=x.part+" €";
       const kv=c.querySelectorAll(".kv b"); kv[0].textContent=eur(x.dec*20); kv[3].textContent=eur(x.dec*GORDO);
-      renderStats(); renderBars(); renderCurve();
+      renderStats();
     });
   });
 }
@@ -857,27 +877,8 @@ function renderStats(){
     <div class="stat gold"><b>${eur(best.dec*GORDO)}</b><small>Máximo con un solo Gordo (${best.n})</small></div>
     <div class="stat"><b>${pct(k/N)}</b><small>Probabilidad de que alguno sea el Gordo (1 entre ${k?Math.round(N/k).toLocaleString("es-ES"):"–"})</small></div>
     <div class="stat"><b>${pct(pAny(k))}</b><small>Probabilidad de algún premio de número</small></div>
-    <div class="stat"><b>${(digits*10)} %</b><small>Probabilidad de recuperar el reintegro</small></div>`;
-}
-
-/* ---------- Gráficos ---------- */
-function renderBars(){
-  const max=Math.max(...NUMS.map(x=>x.dec*GORDO),1);
-  $("bars").innerHTML = [...NUMS].sort((a,b)=>b.dec-a.dec).map(x=>`<div class="bar"><span>${x.n}</span><div class="track"><div class="fill" style="width:${x.dec*GORDO/max*100}%"></div></div><span>${eur(x.dec*GORDO)}</span></div>`).join("");
-}
-function renderCurve(){
-  const W=520,H=300,L=44,B=30,T=14,R=14, kmax=Math.max(60,Math.ceil((active().length+5)/10)*10);
-  const X=k=>L+(k/kmax)*(W-L-R), Y=p=>H-B-(p/0.7)*(H-B-T);
-  let d="",g="";
-  for(let k=0;k<=kmax;k++) d+=(k?"L":"M")+X(k).toFixed(1)+","+Y(pAny(k)).toFixed(1);
-  [0,.1,.2,.3,.4,.5,.6,.7].forEach(p=>g+=`<line x1="${L}" x2="${W-R}" y1="${Y(p)}" y2="${Y(p)}" stroke="#ffffff18"/><text x="${L-6}" y="${Y(p)+4}" text-anchor="end">${Math.round(p*100)} %</text>`);
-  [0,1,2,3,4,5,6].map(i=>Math.round(kmax/6*i)).forEach(k=>g+=`<text x="${X(k)}" y="${H-10}" text-anchor="middle">${k}</text>`);
-  const k=active().length, pk=pAny(k);
-  $("curve").innerHTML = g+`<path d="${d}" fill="none" stroke="var(--gold)" stroke-width="3"/>
-    <line x1="${X(k)}" x2="${X(k)}" y1="${Y(pk)}" y2="${H-B}" stroke="var(--red)" stroke-dasharray="4 3"/>
-    <circle cx="${X(k)}" cy="${Y(pk)}" r="6" fill="var(--red)" stroke="#fff" stroke-width="2"/>
-    <text x="${W/2}" y="${H-0}" text-anchor="middle">Números distintos jugados</text>`;
-  $("curveNote").textContent = `Con tus ${active().length} números distintos tienes un ${pct(pAny(active().length))} de probabilidad de algún premio de número. Con 60 serían ${pct(pAny(60))}.`;
+    <div class="stat"><b>${(digits*10)} %</b><small>Probabilidad de recuperar el reintegro</small></div>`
+    + (computeWins().total>0?`<div class="stat gold"><b>${eur(computeWins().total)}</b><small>Premios del sorteo hasta ahora</small></div>`:"");
 }
 
 /* ---------- Simulador ---------- */
@@ -906,6 +907,68 @@ function showSim(draw,gordo){
     + `<p class="total">${eur(total)} <span style="font-size:.9rem;color:var(--mute)">de ${eur(inv)} jugados</span></p>`;
 }
 
+/* ---------- Día del sorteo ---------- */
+const DRAW_KEY="loteria26_sorteo";
+const DRAW_TITLES=["Premio Gordo","Segundo premio","Tercer premio","Cuarto premio","Quinto premio"];
+const DRAW={main:PRIZES.slice(0,5).map(p=>Array(p[2]).fill("")),p:""};
+let lastWinKey="";
+function saveDraw(){ try{ localStorage.setItem(DRAW_KEY,JSON.stringify(DRAW)); }catch(e){} }
+function computeWins(){
+  const mine=new Map(NUMS.filter(x=>x.dec>0).map(x=>[x.n,x]));
+  const wins={};
+  const add=(n,name,amt)=>{ (wins[n]=wins[n]||[]).push({name,amt}); };
+  DRAW.main.forEach((arr,i)=>arr.forEach(v=>{ if(/^\d{5}$/.test(v)&&mine.has(v)) add(v,PRIZES[i][0],PRIZES[i][1]); }));
+  new Set(DRAW.p.match(/\d{5}/g)||[]).forEach(v=>{ if(mine.has(v)&&!(wins[v]||[]).some(w=>w.name==="Pedrea")) add(v,"Pedrea",PRIZES[5][1]); });
+  const g=DRAW.main[0][0];
+  if(/^\d{5}$/.test(g)){ mine.forEach((x,n)=>{ if(n.slice(-1)===g.slice(-1)&&!wins[n]) add(n,"Reintegro",20); }); }
+  let total=0; Object.entries(wins).forEach(([n,l])=>{ total+=l.reduce((s,w)=>s+w.amt,0)*mine.get(n).dec; });
+  const filled=DRAW.main.flat().filter(v=>/^\d{5}$/.test(v)).length;
+  return {wins,total,filled};
+}
+function setDraw(i,j,v){ DRAW.main[i][j]=v; saveDraw(); updateSorteo(); }
+function initSorteo(){
+  try{
+    const d=JSON.parse(localStorage.getItem(DRAW_KEY)||"null");
+    if(d&&Array.isArray(d.main)){
+      DRAW.main=PRIZES.slice(0,5).map((p,i)=>Array.from({length:p[2]},(_,j)=>{ const v=String((d.main[i]&&d.main[i][j])||""); return /^\d{0,5}$/.test(v)?v:""; }));
+      DRAW.p=String(d.p||"").slice(0,20000);
+    }
+  }catch(e){}
+  $("drawGrid").innerHTML=PRIZES.slice(0,5).map((p,i)=>`<div class="dgroup"><h4>${DRAW_TITLES[i]}<small>${eur(p[1])} por décimo${p[2]>1?" · "+p[2]+" números":""}</small></h4><div class="dfields">`+
+    DRAW.main[i].map((v,j)=>`<label class="dfield" id="df-${i}-${j}"><input data-i="${i}" data-j="${j}" inputmode="numeric" maxlength="5" placeholder="·····" value="${v}" aria-label="${DRAW_TITLES[i]} ${j+1}" autocomplete="off"><small></small></label>`).join("")+`</div></div>`).join("");
+  $("drawGrid").querySelectorAll("input").forEach(inp=>inp.addEventListener("input",()=>{
+    inp.value=inp.value.replace(/\D/g,"").slice(0,5); setDraw(+inp.dataset.i,+inp.dataset.j,inp.value);
+  }));
+  $("drawPed").value=DRAW.p;
+  $("drawPed").addEventListener("input",e=>{ DRAW.p=e.target.value.slice(0,20000); saveDraw(); updateSorteo(); });
+  $("drawClear").onclick=()=>{
+    if(!confirm("¿Borrar todos los números del sorteo que has escrito?")) return;
+    DRAW.main=PRIZES.slice(0,5).map(p=>Array(p[2]).fill("")); DRAW.p=""; saveDraw();
+    $("drawGrid").querySelectorAll("input").forEach(inp=>inp.value=""); $("drawPed").value=""; updateSorteo();
+  };
+}
+function updateSorteo(){
+  const W=computeWins();
+  PRIZES.slice(0,5).forEach((p,i)=>DRAW.main[i].forEach((v,j)=>{
+    const lab=$(`df-${i}-${j}`); if(!lab) return;
+    const x=NUMS.find(z=>z.n===v&&z.dec>0), full=/^\d{5}$/.test(v);
+    lab.classList.toggle("hit",!!x); lab.classList.toggle("miss",full&&!x);
+    lab.querySelector("small").textContent = x?`¡Lo tienes! +${eur(p[1]*x.dec)}`:(full?"No lo tienes":"");
+  }));
+  const inv=active().reduce((s,x)=>s+x.dec*20,0), bal=W.total-inv;
+  const rows=Object.entries(W.wins).map(([n,l])=>{
+    const x=NUMS.find(z=>z.n===n), b=BUY[n], sum=l.reduce((s,w)=>s+w.amt,0)*x.dec;
+    return `<div class="win"><span><b>${n}</b> · ${l.map(w=>w.name).join(" + ")} · ${num(x.dec)} ${x.dec===1?"décimo":"décimos"}<br><small style="color:#cfeede">${b.venue}, ${townName(b.town)}</small></span><b>${eur(sum)}</b></div>`;
+  }).sort().join("");
+  const g=DRAW.main[0][0];
+  $("drawOut").innerHTML=`<div class="bigwin ${W.total?"":"zero"}">${eur(W.total)}</div>
+    <div class="balance"><span>Jugado <b>${eur(inv)}</b></span><span>Balance <b class="${bal>=0?"pos":"neg"}">${bal>=0?"+":""}${eur(bal)}</b></span><span>Números del sorteo <b>${W.filled} de 13</b></span></div>`+
+    (rows?`<div class="result">${rows}</div>`:`<div class="result"><div class="lose">${W.filled?"De momento ninguno de tus números ha salido.":"Aún no has escrito ningún número."}</div></div>`)+
+    `<p class="note">Cuenta los cinco premios principales, la pedrea que escribas y el reintegro (20 € por décimo si tu número acaba como el Gordo${/^\d{5}$/.test(g)?", terminado en "+g.slice(-1):""}, y no tiene otro premio). No incluye aproximaciones, centenas ni terminaciones: compruébalas en la web oficial.</p>`;
+  const key=Object.entries(W.wins).map(([n,l])=>n+":"+l.reduce((s,w)=>s+w.amt,0)).sort().join("|");
+  if(key!==lastWinKey){ lastWinKey=key; renderTickets(); renderStats(); }
+}
+
 /* ---------- Aviso ---------- */
 let toastT;
 function toast(msg){
@@ -928,9 +991,11 @@ $("fTown").onchange=e=>{ $("newTown").hidden = e.target.value!=="__new"; };
 ["fNum","fVenue","fPart"].forEach(i=>$(i).addEventListener("keydown",e=>{ if(e.key==="Enter") addNumber(); }));
 $("fNum").addEventListener("input",e=>{ e.target.value=e.target.value.replace(/\D/g,"").slice(0,5); });
 initState();
+initSorteo();
 if(!NUMS.some(x=>x.n===sel)) sel=NUMS.length?NUMS[0].n:null;
 document.documentElement.style.setProperty("--ticket",`url("${TICKET_SRC}")`);
 refresh();
+updateSorteo();
 if(typeof IntersectionObserver!=="undefined"){
   new IntersectionObserver((es,o)=>{ if(es.some(e=>e.isIntersecting)){ document.querySelectorAll(".ticket").forEach((t,i)=>setTimeout(()=>spin(t),i*120)); o.disconnect(); } },{threshold:.2}).observe($("decimos"));
 }
