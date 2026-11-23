@@ -107,9 +107,12 @@ h2{font-family:var(--serif);font-size:1.6rem;margin:0 0 4px}
 #toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:var(--gold);color:var(--ink);font-weight:700;padding:12px 18px;border-radius:12px;box-shadow:0 12px 30px #000a;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:30;max-width:90vw;text-align:center}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 [hidden]{display:none!important}
-.callout .cam{position:absolute;top:3px;right:3px;z-index:3;border:0;border-radius:50%;width:22px;height:22px;padding:0;font-size:12px;line-height:22px;cursor:pointer;background:#000b;color:#fff;opacity:0;transition:opacity .15s}
-.callout:hover .cam,.callout:focus-within .cam{opacity:1}
-@media (hover:none){.callout .cam{opacity:.9}}
+.pmenu{position:absolute;z-index:8;background:#0b1430;border:1px solid var(--gold);border-radius:12px;padding:10px 12px;box-shadow:0 12px 28px #000b;display:grid;gap:8px;font-size:.9rem}
+.pmenu .top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pmenu .pclose{border:0;background:transparent;color:var(--mute);font-size:1rem;cursor:pointer;padding:2px 6px}
+.pmenu .row{display:flex;gap:6px;flex-wrap:wrap}
+.pmenu .btn{padding:7px 10px;font-size:.82rem}
+@media (hover:none){.callout:hover{transform:none}}
 .sorteo-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px;align-items:start}
 .dgroup{margin-bottom:14px}
 .dgroup h4{margin:0 0 6px;font-family:var(--serif);font-size:1.05rem}
@@ -206,7 +209,7 @@ footer{margin-top:40px;color:var(--mute);font-size:.85rem;border-top:1px solid #
   <p class="sub">Cada círculo es un pueblo o ciudad y muestra cuántos números compraste allí. Pasa el ratón por encima para ver los bares y números, o elige un número para ver dónde está.</p>
   <div class="maprow">
     <div class="panel">
-      <div id="mapwrap"><svg id="map" viewBox="0 0 820 560" role="img" aria-label="Mapa de España con ciudades donde comprar lotería"></svg><div id="callouts"></div></div>
+      <div id="mapwrap"><svg id="map" viewBox="0 0 820 560" role="img" aria-label="Mapa de España con ciudades donde comprar lotería"></svg><div id="callouts"></div><div id="photoMenu" class="pmenu" hidden></div></div>
       <div class="legend">
         <span><i style="background:var(--gold)"></i>Lugar de compra (el tamaño indica cuántos números)</span>
         <span>El círculo pulsa en el lugar del número elegido</span>
@@ -549,7 +552,7 @@ function renderEndings(){
   $("endNote").textContent = !NUMS.length ? "Aún no hay números." :
     `Tus números cubren ${cub} de las 10 terminaciones${falta.length?". Sin cubrir: "+falta.join(", ")+".":"."} Si el Gordo acaba en una terminación que cubres, recuperas al menos el reintegro (20 € por décimo).`;
 }
-function refresh(){ if(editing&&!NUMS.some(x=>x.n===editing)) resetForm(); renderEndings(); buildMap(); renderCallouts(); PLACED.forEach(it=>loadPhoto(it.id)); renderTickets(); renderCards(); renderSide(); renderMap(); renderStats(); fillTowns(); updateSorteo(); }
+function refresh(){ closePhotoMenu(); if(editing&&!NUMS.some(x=>x.n===editing)) resetForm(); renderEndings(); buildMap(); renderCallouts(); PLACED.forEach(it=>loadPhoto(it.id)); renderTickets(); renderCards(); renderSide(); renderMap(); renderStats(); fillTowns(); updateSorteo(); }
 
 const numbersIn = id=>NUMS.filter(x=>BUY[x.n].town===id).map(x=>x.n);
 
@@ -599,7 +602,7 @@ function buildMap(){
   svg.innerHTML = h;
   svg.querySelectorAll(".pin").forEach(g=>{
     const id=g.dataset.id;
-    g.addEventListener("click",()=>{ const ns=numbersIn(id); if(!ns.length) return; const i=ns.indexOf(sel); select(ns[(i+1)%ns.length]); });
+    g.addEventListener("click",()=>{ const ns=numbersIn(id); if(!ns.length) return; const i=ns.indexOf(sel); select(ns[(i+1)%ns.length]); openPhotoMenu(id); });
     g.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){e.preventDefault();g.dispatchEvent(new Event("click"));} });
     g.addEventListener("mousemove",e=>showTip(e,id));
     g.addEventListener("mouseleave",hideTip);
@@ -765,6 +768,21 @@ function placeCallouts(items){
   return out;
 }
 function anchor(sl){ return sl.side==="left"?[sl.x+CW,sl.y+CH/2]:sl.side==="right"?[sl.x,sl.y+CH/2]:[sl.x+CW/2,sl.y]; }
+function closePhotoMenu(){ const m=$("photoMenu"); if(m) m.hidden=true; }
+function openPhotoMenu(id){
+  const m=$("photoMenu"), t=TOWNS[id]; if(!m||!t) return;
+  m.innerHTML=`<div class="top"><b>${townName(id)}</b><button class="pclose" type="button" aria-label="Cerrar">✕</button></div>
+    <div class="row"><button class="btn" id="pmChange" type="button">📷 Cambiar foto</button>${OWN[id]?'<button class="btn alt" id="pmReset" type="button">Quitar mi foto</button>':""}</div>`;
+  m.hidden=false;
+  const wrap=$("mapwrap"), W=wrap.clientWidth||600, H=wrap.clientHeight||400, xy=townXY(t);
+  const pw=Math.min(210,W-8); m.style.width=pw+"px";
+  const px=xy[0]/VBW*W, py=xy[1]/560*H, below=py<H*0.35;
+  m.style.left=Math.max(4,Math.min(W-pw-4,px-pw/2))+"px";
+  m.style.top=(below?py+16:py-16)+"px"; m.style.transform=below?"none":"translateY(-100%)";
+  m.querySelector(".pclose").onclick=closePhotoMenu;
+  m.querySelector("#pmChange").onclick=()=>{ closePhotoMenu(); choosePhoto(id); };
+  const r=m.querySelector("#pmReset"); if(r) r.onclick=()=>{ closePhotoMenu(); removeOwn(id); };
+}
 function cycleTown(id){ const ns=numbersIn(id); if(!ns.length) return; const i=ns.indexOf(sel); select(ns[(i+1)%ns.length]); }
 function renderCallouts(){
   $("callouts").innerHTML = PLACED.map(it=>{
@@ -772,11 +790,10 @@ function renderCallouts(){
     const src=photoSrc(it.id);
     const img=src?`<img src="${src}" alt="${name}" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:"";
     return `<figure class="callout" data-id="${it.id}" tabindex="0" role="button" aria-label="${name}" title="${name}${ph&&ph.title?" · "+ph.title:""}"
-      style="left:${(it.slot.x/VBW*100).toFixed(2)}%;top:${(it.slot.y/560*100).toFixed(2)}%;margin:0">${artSvg(it.id)}${img}<button class="cam" type="button" aria-label="Cambiar la foto de ${name}" title="Cambiar la foto">📷</button><figcaption>${name}</figcaption></figure>`;
+      style="left:${(it.slot.x/VBW*100).toFixed(2)}%;top:${(it.slot.y/560*100).toFixed(2)}%;margin:0">${artSvg(it.id)}${img}<figcaption>${name}</figcaption></figure>`;
   }).join("");
   document.querySelectorAll(".callout").forEach(c=>{
-    const cam=c.querySelector(".cam"); if(cam) cam.addEventListener("click",e=>{ e.stopPropagation(); choosePhoto(c.dataset.id); });
-    c.addEventListener("click",()=>cycleTown(c.dataset.id));
+    c.addEventListener("click",()=>{ cycleTown(c.dataset.id); openPhotoMenu(c.dataset.id); });
     c.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); cycleTown(c.dataset.id); } });
   });
   markCallouts();
@@ -1031,6 +1048,8 @@ function toast(msg){
 
 /* ---------- Inicio ---------- */
 $("fAdd").onclick=addNumber;
+document.addEventListener("click",e=>{ if(!(e.target.closest&&e.target.closest("#photoMenu,.pin,.callout"))) closePhotoMenu(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closePhotoMenu(); });
 $("photoFile").addEventListener("change",onPhotoChosen);
 $("fCancel").onclick=()=>{ resetForm(); msg("Edición cancelada.",true); };
 $("endN").onclick=()=>{ endMode="n"; $("endN").classList.add("on"); $("endD").classList.remove("on"); renderEndings(); };
