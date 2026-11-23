@@ -107,6 +107,17 @@ h2{font-family:var(--serif);font-size:1.6rem;margin:0 0 4px}
 #toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:var(--gold);color:var(--ink);font-weight:700;padding:12px 18px;border-radius:12px;box-shadow:0 12px 30px #000a;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:30;max-width:90vw;text-align:center}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 [hidden]{display:none!important}
+.grp{grid-column:1/-1;display:flex;align-items:baseline;gap:10px;border-bottom:1px solid #2b4382;padding-bottom:6px;margin-top:8px}
+.grp:first-child{margin-top:0}
+.grp b{font-family:var(--serif);font-size:1.2rem;color:var(--gold)}
+.grp span{color:var(--mute);font-size:.88rem}
+.livebar{margin-bottom:16px}
+.livehead{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.livehead span{color:var(--mute);font-size:.9rem}
+.livehead span.ok{color:#7fe0b6}.livehead span.err{color:#ff9aa5}
+.liveopts{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.liveopts label{display:flex;gap:6px;align-items:center;font-size:.88rem;color:var(--snow)}
+.liveopts input{accent-color:var(--gold)}
 .pmenu{position:absolute;z-index:8;background:#0b1430;border:1px solid var(--gold);border-radius:12px;padding:10px 12px;box-shadow:0 12px 28px #000b;display:grid;gap:8px;font-size:.9rem}
 .pmenu .top{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .pmenu .pclose{border:0;background:transparent;color:var(--mute);font-size:1rem;cursor:pointer;padding:2px 6px}
@@ -305,6 +316,16 @@ footer{margin-top:40px;color:var(--mute);font-size:.85rem;border-top:1px solid #
 <section id="sorteo">
   <h2>Día del sorteo: comprueba tus premios</h2>
   <p class="sub">Escribe los números según vayan saliendo. La página los compara con tus décimos y suma lo que has ganado. Se guarda solo en este navegador, así que puedes cerrarla y seguir más tarde.</p>
+  <div class="panel livebar">
+    <div class="livehead"><b>Resultados de internet</b><span id="liveStatus">Sin consultar todavía</span></div>
+    <div class="liveopts">
+      <button class="btn" id="liveGo" type="button">Consultar resultados</button>
+      <label><input type="checkbox" id="liveAuto"> Actualizar cada 3 minutos</label>
+      <label><input type="checkbox" id="liveUse" checked> Calcular con la lista de internet</label>
+      <label><input type="checkbox" id="liveDemo"> Probar con los datos de 2025</label>
+    </div>
+    <p class="note" style="margin:8px 0 0">Fuente no oficial: un proyecto comunitario que copia la lista de RTVE cada pocos minutos, así que puede ir con retraso. Si falla, escribe los números a mano más abajo. Contrasta siempre con <a href="https://www.loteriasyapuestas.es" target="_blank" rel="noopener">loteriasyapuestas.es</a>.</p>
+  </div>
   <div class="sorteo-grid">
     <div class="panel">
       <div id="drawGrid"></div>
@@ -552,7 +573,20 @@ function renderEndings(){
   $("endNote").textContent = !NUMS.length ? "Aún no hay números." :
     `Tus números cubren ${cub} de las 10 terminaciones${falta.length?". Sin cubrir: "+falta.join(", ")+".":"."} Si el Gordo acaba en una terminación que cubres, recuperas al menos el reintegro (20 € por décimo).`;
 }
-function refresh(){ closePhotoMenu(); if(editing&&!NUMS.some(x=>x.n===editing)) resetForm(); renderEndings(); buildMap(); renderCallouts(); PLACED.forEach(it=>loadPhoto(it.id)); renderTickets(); renderCards(); renderSide(); renderMap(); renderStats(); fillTowns(); updateSorteo(); }
+const PLACE_ORDER=["madrid","calzada de oropesa"];   // primero estos lugares, y después el resto por orden alfabético
+const norm=t=>String(t).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+function sortNums(){
+  const idx=new Map(NUMS.map((x,i)=>[x.n,i]));
+  const key=x=>{ const t=norm(townName(BUY[x.n].town)), r=PLACE_ORDER.indexOf(t); return r>=0?[r,""]:[PLACE_ORDER.length,t]; };
+  NUMS.sort((a,b)=>{ const ka=key(a), kb=key(b); return ka[0]-kb[0]||ka[1].localeCompare(kb[1],"es")||idx.get(a.n)-idx.get(b.n); });
+}
+function grpHead(i){
+  const t=BUY[NUMS[i].n].town;
+  if(i>0&&BUY[NUMS[i-1].n].town===t) return "";
+  const c=NUMS.filter(x=>BUY[x.n].town===t).length;
+  return `<div class="grp"><b>${townName(t)}</b><span>${c} ${c===1?"décimo":"décimos"}</span></div>`;
+}
+function refresh(){ sortNums(); closePhotoMenu(); if(editing&&!NUMS.some(x=>x.n===editing)) resetForm(); renderEndings(); buildMap(); renderCallouts(); PLACED.forEach(it=>loadPhoto(it.id)); renderTickets(); renderCards(); renderSide(); renderMap(); renderStats(); fillTowns(); updateSorteo(); }
 
 const numbersIn = id=>NUMS.filter(x=>BUY[x.n].town===id).map(x=>x.n);
 
@@ -847,11 +881,11 @@ const TK_X=[594,724,854,983.5,1113.5], TK_W=1519, TK_H=894, TK_Y=176, TK_R=58;
 function renderTickets(){
   const el=$("tickets");
   if(!NUMS.length){ el.innerHTML=`<p class="note">No tienes ningún número.</p>`; return; }
-  el.innerHTML = NUMS.map(x=>{
+  el.innerHTML = NUMS.map((x,i)=>{
     const b=BUY[x.n];
     const WN=computeWins().wins[x.n], wtot=WN?WN.reduce((s,w)=>s+w.amt,0)*x.dec:0;
     const digs=x.n.split("").map((d,i)=>`<span class="dg" style="left:${(TK_X[i]/TK_W*100).toFixed(2)}%">${d}</span>`).join("");
-    return `<div class="tk"><div class="ticket ${x.n===sel?"sel":""}${wtot?" win":""}" data-n="${x.n}" role="button" tabindex="0" aria-label="Décimo ${x.n}">${digs}${wtot?`<span class="ribbon">${eur(wtot)}</span>`:""}</div>
+    return grpHead(i)+`<div class="tk"><div class="ticket ${x.n===sel?"sel":""}${wtot?" win":""}" data-n="${x.n}" role="button" tabindex="0" aria-label="Décimo ${x.n}">${digs}${wtot?`<span class="ribbon">${eur(wtot)}</span>`:""}</div>
       <div class="tkinfo"><span><b>${x.n}</b> · ${x.part} € · ${b.venue}, ${townName(b.town)}</span>
       <span class="tkbtn"><button class="btn alt" type="button" data-act="spin">Girar</button><button class="btn alt" type="button" data-act="edit">Editar</button><button class="btn alt" type="button" data-act="png">Descargar</button></span></div></div>`;
   }).join("");
@@ -898,9 +932,9 @@ function downloadTicket(n){
 /* ---------- Tarjetas ---------- */
 function renderCards(){
   if(!NUMS.length){ $("cards").innerHTML=`<p class="note">Aún no tienes ningún número. Añade el primero con el formulario de arriba, o usa «Importar datos» si ya tienes un fichero.</p>`; return; }
-  $("cards").innerHTML = NUMS.map(x=>{
+  $("cards").innerHTML = NUMS.map((x,i)=>{
     const pu=BUY[x.n]; const cs=pu?pu.venue+" · "+townName(pu.town):"";
-    return `<div class="card ${x.n===sel?"sel":""}" data-n="${x.n}">
+    return grpHead(i)+`<div class="card ${x.n===sel?"sel":""}" data-n="${x.n}">
       <div class="top"><div class="digits">${x.n.split("").map(d=>`<span>${d}</span>`).join("")}</div><span class="tag">${x.part} €</span></div>
       <label for="r${x.n}"><span>Décimos</span><span id="d${x.n}">${num(x.dec)}</span></label>
       <input type="range" id="r${x.n}" min="0" max="10" step="0.25" value="${x.dec}">
@@ -975,6 +1009,74 @@ function showSim(draw,gordo){
     + `<p class="total">${eur(total)} <span style="font-size:.9rem;color:var(--mute)">de ${eur(inv)} jugados</span></p>`;
 }
 
+/* ---------- Resultados de internet (fuente comunitaria, no oficial) ---------- */
+const LIVE_BASE="https://api-loteria.pabloclementeperez.com/output/";
+const LIVE={use:true,demo:false,ok:false,busy:false,prizes:null,labels:{},div:10,mainCount:0,timer:0};
+const MAIN_LABELS=["Gordo","Segundo","Tercero","Cuarto","Cuarto","Quinto","Quinto","Quinto","Quinto","Quinto","Quinto","Quinto","Quinto"];
+async function getJson(file){
+  const ctl=new AbortController(), t=setTimeout(()=>ctl.abort(),15000);
+  try{
+    const r=await fetch(LIVE_BASE+file+"?_="+Date.now(),{cache:"no-store",signal:ctl.signal});
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    let txt=(await r.text()).trim().replace(/^\s*[\w$]+\s*=\s*/,"").replace(/;\s*$/,"");
+    return JSON.parse(txt);
+  } finally { clearTimeout(t); }
+}
+function mapFrom(o){
+  const m=new Map();
+  if(Array.isArray(o)){
+    o.forEach(it=>{ if(!it||typeof it!=="object") return;
+      const k=String(it.numero!=null?it.numero:it.number!=null?it.number:it.n!=null?it.n:"").trim(), v=Number(it.premio!=null?it.premio:it.prize!=null?it.prize:it.amount);
+      if(/^\d{1,5}$/.test(k)&&isFinite(v)&&v>0) m.set(k.padStart(5,"0"),v); });
+  } else if(o&&typeof o==="object"){
+    for(const [k,val] of Object.entries(o)){ if(/^\d{1,5}$/.test(k)){ const v=Number(val); if(isFinite(v)&&v>0) m.set(k.padStart(5,"0"),v); } }
+  }
+  return m;
+}
+function parsePrizes(j){
+  let best=mapFrom(j);
+  if(j&&typeof j==="object") Object.values(j).forEach(v=>{ if(v&&typeof v==="object"){ const m=mapFrom(v); if(m.size>best.size) best=m; } });
+  return best;
+}
+function parseMain(res){
+  const src=(res&&res.premios&&typeof res.premios==="object")?res.premios:res, out=[];
+  for(let i=1;i<=13;i++){ const v=src&&src["numero"+i]; if(v==null||!/^\d{1,5}$/.test(String(v).trim())) break; out.push(String(v).trim().padStart(5,"0")); }
+  return out;
+}
+function setLiveStatus(t,cls){ const e=$("liveStatus"); e.textContent=t; e.className=cls||""; }
+async function refreshLive(){
+  if(LIVE.busy) return; LIVE.busy=true; setLiveStatus("Consultando…");
+  try{
+    const cs=await getJson("LoteriaNavidadCurrentStatus.json");
+    const year=+cs.year||2026, status=+cs.status;
+    if(!LIVE.demo&&!(status>=1)){
+      LIVE.ok=false; LIVE.prizes=null;
+      setLiveStatus(`El sorteo de ${year} aún no ha empezado. Vuelve a consultar el 22 de diciembre.`);
+      return;
+    }
+    const [res,list]=await Promise.all([getJson("LoteriaNavidadResumen.json").catch(()=>null),getJson("LoteriaNavidad.json")]);
+    const prizes=parsePrizes(list);
+    if(!prizes.size) throw new Error("la lista está vacía");
+    const dy=+((list&&list.year)||(res&&res.year))||0;
+    if(!LIVE.demo&&dy&&dy!==year){ LIVE.ok=false; LIVE.prizes=null; setLiveStatus(`La lista es de ${dy}, no de ${year}. Esperando a los resultados nuevos.`,"err"); return; }
+    const main=parseMain(res), labels={};
+    main.forEach((n,i)=>{ labels[n]=MAIN_LABELS[i]; });
+    const gv=main.length?prizes.get(main[0]):null;
+    LIVE.div=(gv&&gv<1000000)?1:10;                 // importes por serie (10 décimos) o por décimo
+    LIVE.prizes=prizes; LIVE.labels=labels; LIVE.mainCount=main.length; LIVE.ok=true;
+    // rellena los campos vacíos con los premios principales
+    const slots=[[0,0],[1,0],[2,0],[3,0],[3,1],[4,0],[4,1],[4,2],[4,3],[4,4],[4,5],[4,6],[4,7]];
+    main.forEach((n,k)=>{ const [i,j]=slots[k]; if(!DRAW.main[i][j]){ DRAW.main[i][j]=n; const inp=$("drawGrid").querySelector(`input[data-i="${i}"][data-j="${j}"]`); if(inp) inp.value=n; } });
+    saveDraw();
+    const hora=new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
+    const est={1:"sorteo en curso",2:"lista provisional",3:"lista semioficial",4:"lista oficial"}[status]||"";
+    setLiveStatus(`${LIVE.demo?"PRUEBA con datos de "+(dy||2025)+" · ":""}${est?est+" · ":""}${prizes.size.toLocaleString("es-ES")} números premiados · consultado a las ${hora}`,"ok");
+  }catch(err){
+    setLiveStatus("No se pudo consultar ("+(err&&err.name==="AbortError"?"tiempo agotado":(err&&err.message)||"error")+"). Puedes seguir con los números a mano.","err");
+  }finally{ LIVE.busy=false; updateSorteo(); }
+}
+function setLiveAuto(on){ clearInterval(LIVE.timer); LIVE.timer=on?setInterval(refreshLive,180000):0; if(on) refreshLive(); }
+
 /* ---------- Día del sorteo ---------- */
 const DRAW_KEY="loteria26_sorteo";
 const DRAW_TITLES=["Premio Gordo","Segundo premio","Tercer premio","Cuarto premio","Quinto premio"];
@@ -983,6 +1085,11 @@ let lastWinKey="";
 function saveDraw(){ try{ localStorage.setItem(DRAW_KEY,JSON.stringify(DRAW)); }catch(e){} }
 function computeWins(){
   const mine=new Map(NUMS.filter(x=>x.dec>0).map(x=>[x.n,x]));
+  if(LIVE.use&&LIVE.ok&&LIVE.prizes){
+    const wins={}; let total=0;
+    mine.forEach((x,n)=>{ const v=LIVE.prizes.get(n); if(v>0){ const amt=v/LIVE.div; wins[n]=[{name:LIVE.labels[n]||"Otros premios",amt}]; total+=amt*x.dec; } });
+    return {wins,total,filled:LIVE.mainCount,live:true};
+  }
   const wins={};
   const add=(n,name,amt)=>{ (wins[n]=wins[n]||[]).push({name,amt}); };
   DRAW.main.forEach((arr,i)=>arr.forEach(v=>{ if(/^\d{5}$/.test(v)&&mine.has(v)) add(v,PRIZES[i][0],PRIZES[i][1]); }));
@@ -1033,6 +1140,7 @@ function updateSorteo(){
     <div class="balance"><span>Jugado <b>${eur(inv)}</b></span><span>Balance <b class="${bal>=0?"pos":"neg"}">${bal>=0?"+":""}${eur(bal)}</b></span><span>Números del sorteo <b>${W.filled} de 13</b></span></div>`+
     (rows?`<div class="result">${rows}</div>`:`<div class="result"><div class="lose">${W.filled?"De momento ninguno de tus números ha salido.":"Aún no has escrito ningún número."}</div></div>`)+
     `<p class="note">Cuenta los cinco premios principales, la pedrea que escribas y el reintegro (20 € por décimo si tu número acaba como el Gordo${/^\d{5}$/.test(g)?", terminado en "+g.slice(-1):""}, y no tiene otro premio). No incluye aproximaciones, centenas ni terminaciones: compruébalas en la web oficial.</p>`;
+  if(W.live){ const n=$("drawOut").querySelector("p.note"); if(n) n.textContent="Calculado con la lista de premios de internet: suma todos los premios que figuran en ella (también los pequeños). Es una fuente no oficial y puede ir con retraso; contrasta con la lista oficial de loteriasyapuestas.es."; }
   const key=Object.entries(W.wins).map(([n,l])=>n+":"+l.reduce((s,w)=>s+w.amt,0)).sort().join("|");
   if(key!==lastWinKey){ lastWinKey=key; renderTickets(); renderStats(); }
 }
@@ -1048,6 +1156,10 @@ function toast(msg){
 
 /* ---------- Inicio ---------- */
 $("fAdd").onclick=addNumber;
+$("liveGo").onclick=refreshLive;
+$("liveAuto").addEventListener("change",e=>setLiveAuto(e.target.checked));
+$("liveUse").addEventListener("change",e=>{ LIVE.use=e.target.checked; updateSorteo(); });
+$("liveDemo").addEventListener("change",e=>{ LIVE.demo=e.target.checked; LIVE.ok=false; LIVE.prizes=null; refreshLive(); });
 document.addEventListener("click",e=>{ if(!(e.target.closest&&e.target.closest("#photoMenu,.pin,.callout"))) closePhotoMenu(); });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape") closePhotoMenu(); });
 $("photoFile").addEventListener("change",onPhotoChosen);
